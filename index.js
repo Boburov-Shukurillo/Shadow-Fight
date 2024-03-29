@@ -1,188 +1,252 @@
 const canvas = document.querySelector("canvas");
 let innerwidth = 1200;
 let innerHeight = 650;
-let imageSrc = "./pacMan.jpg";
 canvas.width = innerwidth;
 canvas.height = innerHeight;
-let graphhic = canvas.getContext("2d");
-let velocity = 0.5;
-let y = 1;
-let ry = 1;
-let attack = 10;
+let ctx = canvas.getContext("2d");
 
-let fighter = new Image();
-fighter.src = "./kenji/Run.png";
-let fighterSlide = 200;
+let fps = 50;
+let addFrame = 200;
 
-let leftPlayer = {
+let PlayerRight = {
+  x: (innerWidth / 8) * 4,
+  y: (innerHeight / 8) * 4,
+  w: 100,
+  height: 400,
+  health: 100,
+};
+
+let PlayerLeft = {
   x: innerWidth / 8,
-  y: innerHeight - 300,
-  width: innerWidth / 16,
-  height: 300,
-  health: 100,
-};
-let rightPlayer = {
-  x: (innerWidth / 8) * 3,
-  y: innerHeight - 300,
-  width: innerWidth / 16,
-  height: 300,
+  y: (innerHeight / 8) * 4,
+  w: 100,
+  height: 400,
   health: 100,
 };
 
-let isFight = false;
-let GameOver = false;
-let LisRun = false;
-function CreateLeftPlayer(x, y, width, height) {
-  this.x = x;
-  this.y = y;
-  this.width = width;
-  this.height = height;
+let shopFps = 0;
 
-  this.draw = (draw) => {
-    graphhic.clearRect(0, 0, innerWidth, innerHeight);
-    graphhic.beginPath();
-    graphhic.rect(x, y, width, height);
-    graphhic.fill();
-  };
+const kenjiSkills = {
+  run: {
+    url: "./kenji/Run.png",
+    frame: 7,
+  },
+  run180: {
+    url: "./kenji/Run180.png",
+    frame: 7,
+  },
+  idle: {
+    url: "./kenji/Idle.png",
+    frame: 3,
+  },
+  idle180: {
+    url: "./kenji/Idle180.png",
+    frame: 3,
+  },
+  Jump: {
+    url: "./kenji/Jump.png",
+    frame: 1,
+  },
+  Fall: {
+    url: "./kenji/Fall.png",
+    frame: 1,
+  },
+  attack: {
+    url: "./kenji/Attack1.png",
+  },
+};
+const SamuraiSkills = {
+  run: {
+    url: "./samuraiMack/Run.png",
+    frame: 7,
+  },
+  run180: {
+    url: "./samuraiMack/Run180.png",
+    frame: 7,
+  },
+  idle: {
+    url: "./samuraiMack/Idle.png",
+    frame: 3,
+  },
+  idle180: {
+    url: "./samuraiMack/Idle180.png",
+    frame: 3,
+  },
+  Jump: {
+    url: "./samuraiMack/Jump.png",
+    frame: 1,
+  },
+  Fall: {
+    url: "./samuraiMack/Fall.png",
+    frame: 1,
+  },
+  attack: {
+    url: "./samuraiMack/Attack1.png",
+  },
+};
+
+let idle = kenjiSkills.idle.url;
+let idleLeft = SamuraiSkills.idle.url;
+function create() {
+  let playerKenji = new Image();
+  playerKenji.src = idle;
+  ctx.drawImage(
+    playerKenji,
+    fps,
+    10,
+    100,
+    200,
+    PlayerRight.x,
+    PlayerRight.y,
+    250,
+    400
+  );
 }
+
+function createSamurai() {
+  let playerSamurai = new Image();
+  playerSamurai.src = SamuraiSkills.idle.url;
+  ctx.drawImage(
+    playerSamurai,
+    fps,
+    10,
+    100,
+    200,
+    PlayerLeft.x,
+    PlayerLeft.y,
+    250,
+    400
+  );
+}
+let dx = 0;
+let dxl = 0;
+let dyl = 5;
+let dy = 5;
+let velocity = 0.5;
+let up = 200;
 
 window.addEventListener("keydown", (e) => {
-  console.log(rightPlayer.x);
-  console.log(leftPlayer.x);
-  if (!GameOver) {
-    if (e.key === "ArrowRight") {
-      rightPlayer.x += rightPlayer.width;
-    }
-    if (e.key === "ArrowLeft") {
-      rightPlayer.x -= rightPlayer.width;
-    }
-    if (e.key === "ArrowUp") {
-      y = 1;
-      rightPlayer.y -= rightPlayer.height;
-    }
-    if (e.key === "ArrowDown" && isFight) {
-      fighter.src = "./kenji/Attack1.png";
-      fighterSlide = 0;
-      LRun = 250;
-      leftPlayer.health -= 10;
-    }
-
-    if (e.key === "d") {
-      leftPlayer.x += leftPlayer.width;
-      LisRun = true;
-    }
-    if (e.key === "a") {
-      leftPlayer.x -= leftPlayer.width;
-      LisRun = true;
-    }
-    if (e.key === "w") {
-      ry = 1;
-      leftPlayer.y -= leftPlayer.height;
-    }
-    if (e.key === "s" && isFight) {
-      rightPlayer.health -= 10;
-    }
+  if (e.key === "ArrowRight") {
+    idle = kenjiSkills.run180.url;
+    dx = 10;
   }
-});
+  if (e.key === "ArrowLeft") {
+    idle = kenjiSkills.run.url;
+    dx = -10;
+  }
 
-window.addEventListener("keyup", (e) => {
+  if (e.key === "ArrowUp") {
+    PlayerRight.y -= up;
+    up = 0;
+    dy = 5;
+  }
+  if (e.key === "ArrowDown" && checked()) {
+    PlayerLeft.health -= 10;
+    idle = kenjiSkills.attack.url;
+  }
   if (e.key === "d") {
-    LisRun = false;
+    idleLeft = SamuraiSkills.run.url;
+    dxl = 10;
   }
   if (e.key === "a") {
-    LisRun = false;
+    idleLeft = SamuraiSkills.run180.url;
+    dxl = -10;
   }
-  // if (e.key === "w") {
-  //   ry = 1;
-  // }
-  // if (e.key === "s" && isFight) {
-  //   rightPlayer.health -= 10;
-  // }
+
+  if (e.key === "w") {
+    PlayerLeft.y -= up;
+    up = 0;
+    dyl = 5;
+  }
+  if (e.key === "s" && checked()) {
+    PlayerRight.health -= 10;
+    idleLeft = SamuraiSkills.attack.url;
+  }
 });
 
-let cutImage = 0;
-let LRun = 50;
+window.addEventListener("keyup", () => {
+  idle = kenjiSkills.idle.url;
+  dx = 0;
+  dxl = 0;
+});
+function checked() {
+  let check = PlayerRight.x - PlayerLeft.x;
+  let check2 = PlayerLeft.x - PlayerRight.x;
+  if (check2 < 100 && check < 100) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 function animate() {
   requestAnimationFrame(animate);
-  let player = new CreateLeftPlayer(
-    leftPlayer.x,
-    leftPlayer.y,
-    leftPlayer.width,
-    leftPlayer.height
-  );
-  player.draw();
-  if (rightPlayer.y < innerHeight - rightPlayer.height - 10) {
-    rightPlayer.y += y;
-    y += 0.5;
-  }
-  if (leftPlayer.y < innerHeight - leftPlayer.height - 10) {
-    leftPlayer.y += ry;
-    ry += 0.5;
-  }
-  if (leftPlayer.health > 0) {
-    graphhic.rect(40, 0, 4 * leftPlayer.health, 40);
-    graphhic.fill();
-  }
-  graphhic.rect(
-    innerwidth - 4 * rightPlayer.health - 40,
-    0,
-    4 * rightPlayer.health,
-    40
-  );
-  graphhic.fill();
-  graphhic.drawImage(
-    fighter,
-    LRun,
-    50,
-    100,
-    100,
-    rightPlayer.x,
-    rightPlayer.y,
-    250,
-    300
-  );
-  let check = rightPlayer.x - leftPlayer.x;
-  let check2 = leftPlayer.x - rightPlayer.x;
 
-  if (rightPlayer.health <= 0 || leftPlayer.health <= 0) {
-    GameOver = true;
-  } else {
-    GameOver = false;
+  PlayerRight.x += dx;
+  PlayerRight.y += dy;
+  dy += velocity;
+  PlayerLeft.x += dxl;
+  PlayerLeft.y += dyl;
+  dyl += velocity;
+  if (PlayerRight.y > (innerHeight / 8) * 4) {
+    dy = 0;
+    up = 200;
+    velocity = 0;
   }
-  if (check2 < 200 && check < 200) {
-    isFight = true;
-  } else {
-    isFight = false;
+  if (PlayerLeft.y > (innerHeight / 8) * 4) {
+    dyl = 0;
+    up = 200;
+    velocity = 0;
   }
-
-
-  // shop
+  // clear another item
+  ctx.clearRect(0, 0, innerWidth, innerHeight);
+  ctx.beginPath();
   let shop = new Image();
   shop.src = "./shop.png";
-  graphhic.drawImage(
+  ctx.drawImage(
     shop,
-    cutImage,
+    shopFps,
     0,
     118,
-    125,
-    innerwidth - 300,
-    innerHeight - 340,
-    250,
-    250
+    130,
+    (innerWidth / 8) * 4.5,
+    (innerHeight / 8) * 3.4,
+    300,
+    300
   );
+  
+  ctx.fillStyle = "red";
+  ctx.fillRect(40, 40, 400, 40);
+  ctx.fill();
+  ctx.fillStyle = "blue";
+  ctx.fillRect(40, 40, 4 * PlayerLeft.health, 40);
+  ctx.fill();
+  // if (PlayerLeft.health > 0) {
+  // }
 
-  graphhic.fill();
+  // player right
+
+  // if (PlayerRight.health > 0) {
+    ctx.fillStyle = "red";
+    ctx.fillRect((innerWidth / 8) * 4, 40, 4 * PlayerRight.health, 40);
+    ctx.fill();
+    ctx.fillStyle = "blue";
+    ctx.fillRect((innerWidth / 8) * 4, 40, 400, 40);
+    ctx.fill()
+  // }
+  createSamurai();
+  create();
 }
+animate();
 setInterval(() => {
-  if (cutImage < 118 * 5) {
-    cutImage += 118;
+  if (fps < kenjiSkills.Jump.frame * addFrame) {
+    fps += addFrame;
   } else {
-    cutImage = 0;
+    fps = 50;
   }
-  if (LisRun && LRun < 1450) {
-    LRun += fighterSlide;
+  if (shopFps < 118 * 5) {
+    shopFps += 118;
   } else {
-    LRun = 50;
+    shopFps = 0;
   }
 }, 100);
-animate();
